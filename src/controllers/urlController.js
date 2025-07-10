@@ -17,12 +17,12 @@ exports.shortenUrl = async (req, res) => {
     const shortCode = crypto.randomBytes(3).toString('hex'); // 6 chars
     const shortUrl = `${BASE_URL}/${shortCode}`;
 
-    // 3. Optional expiry
+    // 3. Optional expiry (in seconds)
     const expiresAt = expiresIn
       ? new Date(Date.now() + expiresIn * 1000)
       : undefined;
 
-    // 4. Create and save to DB
+    // 4. Save to DB
     const newUrl = new Url({
       originalUrl: url,
       shortCode,
@@ -31,9 +31,35 @@ exports.shortenUrl = async (req, res) => {
 
     await newUrl.save();
 
-    // 5. Return short URL
+    // 5. Return result
     res.json({ shortUrl });
 
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+exports.redirectUrl = async (req, res) => {
+  const { code } = req.params;
+
+  try {
+    const urlEntry = await Url.findOne({ shortCode: code });
+
+    if (!urlEntry) {
+      return res.status(404).json({ error: 'Short URL not found' });
+    }
+
+    if (urlEntry.expiresAt && new Date() > urlEntry.expiresAt) {
+      return res.status(410).json({ error: 'Short URL has expired' });
+    }
+
+    // Increment click count
+    urlEntry.clickCount += 1;
+    await urlEntry.save();
+
+    // Redirect
+    res.redirect(urlEntry.originalUrl);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
