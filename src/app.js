@@ -1,10 +1,15 @@
 // src/app.js
 const express = require('express');
 const mongoose = require('mongoose');
+const rateLimiter = require('./middlewares/rateLimiter');
+
+
 require('dotenv').config();
 
 const app = express();
 app.use(express.json());
+
+app.use(rateLimiter); 
 
 const urlRoutes = require('./routes/urlRoutes');
 app.use('/', urlRoutes);
