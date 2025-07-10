@@ -1,3 +1,4 @@
+// src/app.js
 const express = require('express');
 const mongoose = require('mongoose');
 require('dotenv').config();
@@ -5,9 +6,11 @@ require('dotenv').config();
 const app = express();
 app.use(express.json());
 
-app.get('/', (req, res) => res.send('URL Shortener API Running'));
+const urlRoutes = require('./routes/urlRoutes');
+app.use('/', urlRoutes);
 
 const PORT = process.env.PORT || 3000;
+
 mongoose.connect(process.env.DB_URL)
   .then(() => {
     console.log('MongoDB connected');
